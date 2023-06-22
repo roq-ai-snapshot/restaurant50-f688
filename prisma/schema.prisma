@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model menu_item {
+  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name          String       @db.VarChar(255)
+  price         Int
+  restaurant_id String       @db.Uuid
+  created_at    DateTime     @default(now()) @db.Timestamp(6)
+  updated_at    DateTime     @default(now()) @db.Timestamp(6)
+  restaurant    restaurant   @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_item    order_item[]
+}
+
+model order {
+  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  customer_id   String       @db.Uuid
+  restaurant_id String       @db.Uuid
+  status        String       @db.VarChar(255)
+  created_at    DateTime     @default(now()) @db.Timestamp(6)
+  updated_at    DateTime     @default(now()) @db.Timestamp(6)
+  user          user         @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurant    restaurant   @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_item    order_item[]
+}
+
+model order_item {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  order_id     String    @db.Uuid
+  menu_item_id String    @db.Uuid
+  quantity     Int
+  created_at   DateTime  @default(now()) @db.Timestamp(6)
+  updated_at   DateTime  @default(now()) @db.Timestamp(6)
+  menu_item    menu_item @relation(fields: [menu_item_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order        order     @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model restaurant {
+  id               String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  description      String?            @db.VarChar
+  image            String?            @db.VarChar
+  name             String             @db.VarChar(255)
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  updated_at       DateTime           @default(now()) @db.Timestamp(6)
+  user_id          String             @db.Uuid
+  tenant_id        String             @db.VarChar(255)
+  menu_item        menu_item[]
+  order            order[]
+  user             user               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurant_table restaurant_table[]
+}
+
+model restaurant_table {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  restaurant_id   String       @db.Uuid
+  table_status_id String       @db.Uuid
+  created_at      DateTime     @default(now()) @db.Timestamp(6)
+  updated_at      DateTime     @default(now()) @db.Timestamp(6)
+  restaurant      restaurant   @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  table_status    table_status @relation(fields: [table_status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model table_status {
+  id               String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  status           String             @db.VarChar(255)
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  updated_at       DateTime           @default(now()) @db.Timestamp(6)
+  restaurant_table restaurant_table[]
+}
+
+model user {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String       @unique @db.VarChar(255)
+  firstName   String?      @db.VarChar(255)
+  lastName    String?      @db.VarChar(255)
+  roq_user_id String       @db.VarChar(255)
+  tenant_id   String       @db.VarChar(255)
+  created_at  DateTime     @default(now()) @db.Timestamp(6)
+  updated_at  DateTime     @default(now()) @db.Timestamp(6)
+  order       order[]
+  restaurant  restaurant[]
+}
